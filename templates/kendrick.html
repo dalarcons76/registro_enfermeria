@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kendrick Lamar | OKLAMA</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- CSS de Flask -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="logo">OKLAMA<span>.</span></div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="#hero">Inicio</a></li>
+                <li><a href="#albums">Discografía</a></li>
+                <li><a href="#legacy">Legado</a></li>
+                <li><a href="#quotes">Frases</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <span class="subtitle">COMPTON, CALIFORNIA</span>
+            <h1>KENDRICK LAMAR</h1>
+            <p class="tagline">"Be humble. Sit down." — Poeta, Pulitzer, Icono del Hip-Hop.</p>
+            <div class="hero-buttons">
+                <a href="#albums" class="btn btn-primary">Explorar Álbumes</a>
+                <a href="#legacy" class="btn btn-secondary">Ver Historia</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Discografía Section -->
+    <section id="albums" class="albums-section">
+        <h2 class="section-title">Discografía Discográfica</h2>
+        <p class="section-subtitle">Obras maestras que redefinieron la historia de la música urbana.</p>
+
+        <div class="album-grid">
+
+            <!-- GNX -->
+            <div class="album-card">
+                <div class="album-badge">NUEVO</div>
+                <div class="album-cover gnx">
+                    <div class="cover-text">GNX</div>
+                </div>
+                <div class="album-info">
+                    <h3>GNX</h3>
+                    <span class="year">2024</span>
+                    <p>Un regreso contundente a las raíces de la Costa Oeste con energía pura y barras afiladas.</p>
+                </div>
+            </div>
+
+            <!-- Mr. Morale -->
+            <div class="album-card">
+                <div class="album-cover mr-morale">
+                    <div class="cover-text">MR. MORALE</div>
+                </div>
+                <div class="album-info">
+                    <h3>Mr. Morale & The Big Steppers</h3>
+                    <span class="year">2022</span>
+                    <p>Un viaje doble introspectivo sobre sanación, vulnerabilidad, trauma y paternidad.</p>
+                </div>
+            </div>
+
+            <!-- DAMN. -->
+            <div class="album-card">
+                <div class="album-badge gold">PULITZER</div>
+                <div class="album-cover damn">
+                    <div class="cover-text">DAMN.</div>
+                </div>
+                <div class="album-info">
+                    <h3>DAMN.</h3>
+                    <span class="year">2017</span>
+                    <p>Ganador del Premio Pulitzer. Una exploración conceptual entre la dualidad del bien y el mal.</p>
+                </div>
+            </div>
+
+            <!-- To Pimp A Butterfly -->
+            <div class="album-card">
+                <div class="album-cover tpab">
+                    <div class="cover-text">TPAB</div>
+                </div>
+                <div class="album-info">
+                    <h3>To Pimp a Butterfly</h3>
+                    <span class="year">2015</span>
+                    <p>Obra maestra del jazz, funk y spoken word que aborda la cultura afroamericana y el peso de la
+                        fama.</p>
+                </div>
+            </div>
+
+            <!-- good kid, m.A.A.d city -->
+            <div class="album-card">
+                <div class="album-cover gkmc">
+                    <div class="cover-text">GKMC</div>
+                </div>
+                <div class="album-info">
+                    <h3>good kid, m.A.A.d city</h3>
+                    <span class="year">2012</span>
+                    <p>Un cortometraje cinematográfico en forma de álbum que relata la juventud en Compton.</p>
+                </div>
+            </div>
+
+            <!-- Section.80 -->
+            <div class="album-card">
+                <div class="album-cover section80">
+                    <div class="cover-text">SECTION.80</div>
+                </div>
+                <div class="album-info">
+                    <h3>Section.80</h3>
+                    <span class="year">2011</span>
+                    <p>El álbum debut que posicionó a Kendrick como una de las mentes más brillantes de su generación.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Legado y Logros -->
+    <section id="legacy" class="legacy-section">
+        <h2 class="section-title">Impacto & Reconocimiento</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">17+</div>
+                <div class="stat-label">Premios Grammy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Premio Pulitzer de Música</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">#1</div>
+                <div class="stat-label">Super Bowl LIX Halftime Show</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">10B+</div>
+                <div class="stat-label">Reproducciones Globales</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Frases / Citas -->
+    <section id="quotes" class="quotes-section">
+        <div class="quote-box">
+            <p class="quote-text">"If I'm gonna tell a real story, I'm gonna start with my name."</p>
+            <span class="quote-author">— Kendrick Lamar (m.A.A.d city)</span>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; {{ current_year if current_year else '2026' }} Tributo a Kendrick Lamar. Creado para Flask.</p>
+    </footer>
+
+</body>
+
+</html>

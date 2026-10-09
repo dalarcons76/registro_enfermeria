@@ -1,0 +1,395 @@
+/* ==========================================================================
+   RESET & CONFIGURACIÓN GENERAL
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-dark: #0a0a0c;
+    --bg-card: #141418;
+    --accent-red: #d92323;
+    --accent-gold: #d4af37;
+    --text-light: #f5f5f7;
+    --text-dim: #a0a0aa;
+    --font-heading: 'Cinzel', serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ==========================================================================
+   NAVBAR
+   ========================================================================== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 4rem;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(10, 10, 12, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logo {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: var(--accent-red);
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2.5rem;
+}
+
+.nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: var(--text-light);
+}
+
+/* ==========================================================================
+   HERO SECTION
+   ========================================================================== */
+.hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    padding: 0 1rem;
+    background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-dark) 70%);
+}
+
+.hero-content {
+    max-width: 900px;
+    z-index: 2;
+}
+
+.subtitle {
+    color: var(--accent-red);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    letter-spacing: 4px;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+    font-style: italic;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.9rem 2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--text-light);
+    color: var(--bg-dark);
+}
+
+.btn-primary:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   ALBUMS SECTION
+   ========================================================================== */
+.albums-section {
+    padding: 8rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    margin-bottom: 4rem;
+}
+
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2.5rem;
+}
+
+.album-card {
+    background-color: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.album-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.album-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: var(--accent-red);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    border-radius: 3px;
+    z-index: 10;
+    letter-spacing: 1px;
+}
+
+.album-badge.gold {
+    background-color: var(--accent-gold);
+    color: #000;
+}
+
+.album-cover {
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cover-text {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    padding: 0 1rem;
+}
+
+/* Diseños artísticos simulados para las portadas */
+.gnx {
+    background: linear-gradient(135deg, #111116, #2a2a38);
+}
+
+.mr-morale {
+    background: linear-gradient(135deg, #3d352e, #1a1714);
+}
+
+.damn {
+    background: linear-gradient(135deg, #8b0000, #2b0000);
+}
+
+.tpab {
+    background: linear-gradient(135deg, #2b2b2b, #000000);
+}
+
+.gkmc {
+    background: linear-gradient(135deg, #23395b, #0c1421);
+}
+
+.section80 {
+    background: linear-gradient(135deg, #4a3b32, #1c1510);
+}
+
+.album-info {
+    padding: 1.8rem;
+}
+
+.album-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.album-info .year {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.album-info p {
+    color: #c0c0c8;
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   LEGACY SECTION (ESTADÍSTICAS)
+   ========================================================================== */
+.legacy-section {
+    padding: 6rem 4rem;
+    background-color: #0e0e12;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 4rem auto 0 auto;
+    text-align: center;
+}
+
+.stat-card {
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+.stat-number {
+    font-family: var(--font-heading);
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   QUOTES SECTION
+   ========================================================================== */
+.quotes-section {
+    padding: 8rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.quote-box {
+    max-width: 800px;
+    text-align: center;
+    position: relative;
+    padding: 3rem;
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent-red);
+    border-radius: 0 8px 8px 0;
+}
+
+.quote-text {
+    font-family: var(--font-heading);
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+}
+
+.quote-author {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.footer {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1.2rem 2rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .albums-section,
+    .legacy-section {
+        padding: 5rem 1.5rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+    }
+}
