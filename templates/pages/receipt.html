@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Constancia · Atención #{{ visit.id }}</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Constancia · Atención #{{ visit.id }}</title><link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}"></head>
 <body class="receipt-body"><div class="receipt-toolbar"><a class="btn ghost" href="{{ url_for('visit_detail', visit_id=visit.id) }}">← Volver a atención</a><button class="btn primary" onclick="window.print()">Imprimir / Guardar PDF</button></div>
 <article class="receipt"><header class="receipt-head"><div class="brand-mark">+</div><div><p class="eyebrow">ENFERMERÍA ESCOLAR</p><h1>Constancia de atención</h1><p class="muted">Documento generado desde el registro único de atención</p></div></header>
 <div class="receipt-tag">{{ 'COPIA PARA EL ALUMNO' if tipo == 'alumno' else 'CONSTANCIA PARA EL PROFESOR' }}</div>

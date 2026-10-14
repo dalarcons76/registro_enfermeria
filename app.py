@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DB = BASE_DIR / "instance" / "enfermeria.sqlite3"
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_path=str(BASE_DIR / "instance"), instance_relative_config=True)
+    app = Flask(__name__, instance_path=str(BASE_DIR / "instance"), instance_relative_config=True, template_folder="templates/pages")
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("FLASK_SECRET_KEY"),
         DATABASE=os.environ.get("ENFERMERIA_DATABASE", str(DEFAULT_DB)),
