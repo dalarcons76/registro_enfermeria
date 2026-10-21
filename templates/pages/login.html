@@ -9,6 +9,10 @@
     <label>Usuario<input name="username" required autocomplete="username" autofocus></label>
     <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
     <button class="btn primary full" type="submit">Ingresar al sistema</button>
+    {% if google_login_enabled %}
+    <p class="small muted" style="text-align:center">O continúa con tu cuenta autorizada</p>
+    <a class="btn ghost full" href="{{ url_for('google_login') }}">Continuar con Google</a>
+    {% endif %}
     <p class="small muted">Si no tienes una cuenta, solicita acceso al administrador del sistema.</p>
   </form>
 </section>

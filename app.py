@@ -7,10 +7,13 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
+import click
 from flask import (
     Flask, abort, flash, g, make_response, redirect, render_template,
     request, session, url_for
 )
+from authlib.integrations.flask_client import OAuth
+from authlib.integrations.base_client.errors import OAuthError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -21,6 +24,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("FLASK_SECRET_KEY"),
         DATABASE=os.environ.get("ENFERMERIA_DATABASE", str(DEFAULT_DB)),
+        GOOGLE_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
+        GOOGLE_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.environ.get("HTTPS_ONLY", "0") == "1",
@@ -28,6 +33,18 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
+    app.config["GOOGLE_LOGIN_ENABLED"] = bool(
+        app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET")
+    )
+    oauth = OAuth(app)
+    if app.config["GOOGLE_LOGIN_ENABLED"]:
+        oauth.register(
+            name="google",
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            client_kwargs={"scope": "openid email profile"},
+        )
     if not app.config["SECRET_KEY"]:
         # Suitable only for local development; configure FLASK_SECRET_KEY before deployment.
         app.config["SECRET_KEY"] = secrets.token_hex(32)
@@ -60,7 +77,9 @@ def create_app(test_config=None):
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'enfermeria' CHECK(role IN ('admin','enfermeria')),
             active INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            google_email TEXT,
+            google_sub TEXT
         );
         CREATE TABLE IF NOT EXISTS students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,6 +120,14 @@ def create_app(test_config=None):
             detail TEXT NOT NULL DEFAULT ''
         );
         """)
+        # Migrate databases created before Google sign-in was added.
+        user_columns = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
+        if "google_email" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN google_email TEXT")
+        if "google_sub" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN google_sub TEXT")
+        db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_email ON users(google_email)")
+        db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub)")
         db.commit()
 
     def csrf_token():
@@ -135,7 +162,7 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_user():
-        return {"current_user": current_user()}
+        return {"current_user": current_user(), "google_login_enabled": app.config["GOOGLE_LOGIN_ENABLED"]}
 
     def audit(action, entity, entity_id=None, detail=""):
         user = current_user()
@@ -173,6 +200,55 @@ def create_app(test_config=None):
                 return redirect(url_for("dashboard"))
             flash("Usuario o contraseña incorrectos.", "error")
         return render_template("login.html")
+
+    @app.get("/login/google")
+    def google_login():
+        if not app.config["GOOGLE_LOGIN_ENABLED"]:
+            flash("El inicio con Google aún no está configurado.", "error")
+            return redirect(url_for("login"))
+        scheme = "https" if request.is_secure or app.config["SESSION_COOKIE_SECURE"] else "http"
+        callback_url = url_for("google_callback", _external=True, _scheme=scheme)
+        return oauth.google.authorize_redirect(callback_url)
+
+    @app.get("/login/google/callback")
+    def google_callback():
+        if not app.config["GOOGLE_LOGIN_ENABLED"]:
+            return redirect(url_for("login"))
+        try:
+            token = oauth.google.authorize_access_token()
+        except OAuthError:
+            flash("No se pudo completar el inicio con Google. Inténtalo nuevamente.", "error")
+            return redirect(url_for("login"))
+
+        identity = token.get("userinfo") or {}
+        google_sub = identity.get("sub")
+        email = (identity.get("email") or "").strip().lower()
+        if not google_sub or not email or identity.get("email_verified") is not True:
+            flash("Google no entregó una identidad verificada.", "error")
+            return redirect(url_for("login"))
+
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE google_sub=? AND active=1", (google_sub,)).fetchone()
+        if user is None:
+            # Email is used only for the initial account link. Google sub is the stable login identifier.
+            linked = db.execute("SELECT * FROM users WHERE lower(google_email)=? AND active=1", (email,)).fetchone()
+            if linked and not linked["google_sub"]:
+                try:
+                    db.execute("UPDATE users SET google_sub=? WHERE id=?", (google_sub, linked["id"]))
+                    db.commit()
+                    user = linked
+                except sqlite3.IntegrityError:
+                    db.rollback()
+            if user is None:
+                flash("Esta cuenta de Google no está autorizada. Solicita al administrador que la vincule.", "error")
+                return redirect(url_for("login"))
+
+        session.clear()
+        session["user_id"] = user["id"]
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+        audit("inicio_sesion_google", "user", user["id"])
+        db.commit()
+        return redirect(url_for("dashboard"))
 
     @app.post("/logout")
     @login_required
@@ -400,20 +476,21 @@ def create_app(test_config=None):
         if request.method == "POST":
             username = request.form.get("username","").strip().lower()
             password = request.form.get("password","")
+            google_email = request.form.get("google_email", "").strip().lower() or None
             role = request.form.get("role","enfermeria")
             if len(username) < 3 or len(password) < 12 or role not in ("admin","enfermeria"):
                 flash("Usuario: mínimo 3 caracteres; contraseña: mínimo 12; selecciona un rol válido.", "error")
             else:
                 try:
-                    cur = get_db().execute("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-                        (username,generate_password_hash(password),role))
+                    cur = get_db().execute("INSERT INTO users(username,password_hash,role,google_email) VALUES(?,?,?,?)",
+                        (username,generate_password_hash(password),role,google_email))
                     audit("crear","user",cur.lastrowid,f"Rol: {role}")
                     get_db().commit()
                     flash("Usuario creado.", "success")
                     return redirect(url_for("dashboard"))
                 except sqlite3.IntegrityError:
                     get_db().rollback()
-                    flash("Ese nombre de usuario ya existe.", "error")
+                    flash("Ese nombre de usuario o correo Google ya está asignado.", "error")
         return render_template("create_user.html")
 
     @app.cli.command("crear-admin")
@@ -434,6 +511,29 @@ def create_app(test_config=None):
             except sqlite3.IntegrityError:
                 raise SystemExit("Ese usuario ya existe.")
         print("Administrador creado.")
+
+    @app.cli.command("vincular-google")
+    @click.argument("username")
+    @click.argument("email")
+    def link_google_command(username, email):
+        """Vincular la cuenta Google de un usuario: flask --app app vincular-google USUARIO CORREO"""
+        username = username.strip().lower()
+        email = email.strip().lower()
+        if "@" not in email or len(email) > 254:
+            raise click.ClickException("Debes indicar una dirección de correo válida.")
+        with app.app_context():
+            init_db()
+            db = get_db()
+            try:
+                cur = db.execute("UPDATE users SET google_email=?, google_sub=NULL WHERE username=? AND active=1", (email, username))
+            except sqlite3.IntegrityError:
+                db.rollback()
+                raise click.ClickException("Ese correo Google ya está vinculado a otro usuario.")
+            if cur.rowcount != 1:
+                db.rollback()
+                raise click.ClickException("No existe un usuario activo con ese nombre.")
+            db.commit()
+        click.echo("Cuenta Google vinculada. La primera entrada debe usar ese correo verificado.")
 
     @app.errorhandler(400)
     def bad_request(error):
