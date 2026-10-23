@@ -494,6 +494,36 @@ def create_app(test_config=None):
         return render_template("create_user.html")
 
     @app.cli.command("crear-admin")
+    def crear_admin_inicial():
+        usuario = os.environ.get("ADMIN_INICIAL_USUARIO", "").strip().lower()
+        password = os.environ.get("ADMIN_INICIAL_PASSWORD", "")
+        # Si no hay credenciales configuradas, no hace nada.
+        if not usuario and not password:
+            return
+        if len(usuario) < 3 or len(password) < 12:
+            raise RuntimeError("Credenciales iniciales invalidas")
+        with app.app_context():
+            init_db()
+            db = get_db()
+            # Comprobar si ya existe un administrador.
+            existe = db.execute(
+                "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+            ).fetchone()
+            if existe:
+                return
+            # Crear el primer administrador.
+            db.execute(
+                """INSERT INTO users
+                   (username, password_hash, role)
+                   VALUES (?, ?, ?)""",
+                (
+                    usuario,
+                    generate_password_hash(password),
+                    "admin"
+                )
+            )
+            db.commit()
+            app.logger.info("Administrador inicial creado")
     def create_admin_command():
         """Crear primer administrador: flask --app app crear-admin"""
         import getpass
@@ -546,7 +576,7 @@ def create_app(test_config=None):
     @app.errorhandler(404)
     def not_found(error):
         return render_template("error.html", code=404, message="No encontramos ese registro."), 404
-
+    crear_admin_inicial()
     return app
 
 app = create_app()
