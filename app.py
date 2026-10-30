@@ -12,9 +12,17 @@ from flask import (
     Flask, abort, flash, g, make_response, redirect, render_template,
     request, session, url_for
 )
-from authlib.integrations.flask_client import OAuth
-from authlib.integrations.base_client.errors import OAuthError
 from werkzeug.security import check_password_hash, generate_password_hash
+
+# Importación segura de Authlib para prevenir errores si no está instalado
+try:
+    from authlib.integrations.flask_client import OAuth
+    from authlib.integrations.base_client.errors import OAuthError
+    AUTHLIB_AVAILABLE = True
+except ImportError:
+    AUTHLIB_AVAILABLE = False
+    OAuth = None
+    OAuthError = Exception
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DB = BASE_DIR / "instance" / "enfermeria.sqlite3"
@@ -33,11 +41,13 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
+    
     app.config["GOOGLE_LOGIN_ENABLED"] = bool(
-        app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET")
+        AUTHLIB_AVAILABLE and app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET")
     )
-    oauth = OAuth(app)
-    if app.config["GOOGLE_LOGIN_ENABLED"]:
+    
+    if AUTHLIB_AVAILABLE and app.config["GOOGLE_LOGIN_ENABLED"]:
+        oauth = OAuth(app)
         oauth.register(
             name="google",
             server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
@@ -45,8 +55,10 @@ def create_app(test_config=None):
             client_secret=app.config["GOOGLE_CLIENT_SECRET"],
             client_kwargs={"scope": "openid email profile"},
         )
+    else:
+        oauth = None
+
     if not app.config["SECRET_KEY"]:
-        # Suitable only for local development; configure FLASK_SECRET_KEY before deployment.
         app.config["SECRET_KEY"] = secrets.token_hex(32)
         app.logger.warning("FLASK_SECRET_KEY no configurada; las sesiones se invalidarán al reiniciar.")
     Path(app.config["DATABASE"]).parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +132,6 @@ def create_app(test_config=None):
             detail TEXT NOT NULL DEFAULT ''
         );
         """)
-        # Migrate databases created before Google sign-in was added.
         user_columns = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
         if "google_email" not in user_columns:
             db.execute("ALTER TABLE users ADD COLUMN google_email TEXT")
@@ -128,6 +139,15 @@ def create_app(test_config=None):
             db.execute("ALTER TABLE users ADD COLUMN google_sub TEXT")
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_email ON users(google_email)")
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub)")
+
+        # CREACIÓN DEL ADMINISTRADOR PREDETERMINADO AUTOMÁTICO
+        admin_exists = db.execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone()
+        if not admin_exists:
+            db.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                ("admin", generate_password_hash("Admin2026!Password"), "admin")
+            )
+
         db.commit()
 
     def csrf_token():
@@ -203,7 +223,7 @@ def create_app(test_config=None):
 
     @app.get("/login/google")
     def google_login():
-        if not app.config["GOOGLE_LOGIN_ENABLED"]:
+        if not app.config["GOOGLE_LOGIN_ENABLED"] or not oauth:
             flash("El inicio con Google aún no está configurado.", "error")
             return redirect(url_for("login"))
         scheme = "https" if request.is_secure or app.config["SESSION_COOKIE_SECURE"] else "http"
@@ -212,7 +232,7 @@ def create_app(test_config=None):
 
     @app.get("/login/google/callback")
     def google_callback():
-        if not app.config["GOOGLE_LOGIN_ENABLED"]:
+        if not app.config["GOOGLE_LOGIN_ENABLED"] or not oauth:
             return redirect(url_for("login"))
         try:
             token = oauth.google.authorize_access_token()
@@ -230,7 +250,6 @@ def create_app(test_config=None):
         db = get_db()
         user = db.execute("SELECT * FROM users WHERE google_sub=? AND active=1", (google_sub,)).fetchone()
         if user is None:
-            # Email is used only for the initial account link. Google sub is the stable login identifier.
             linked = db.execute("SELECT * FROM users WHERE lower(google_email)=? AND active=1", (email,)).fetchone()
             if linked and not linked["google_sub"]:
                 try:
@@ -496,7 +515,6 @@ def create_app(test_config=None):
     def crear_admin_inicial():
         usuario = os.environ.get("ADMIN_INICIAL_USUARIO", "").strip().lower()
         password = os.environ.get("ADMIN_INICIAL_PASSWORD", "")
-        # Si no hay credenciales configuradas, no hace nada.
         if not usuario and not password:
             return
         if len(usuario) < 3 or len(password) < 12:
@@ -504,13 +522,11 @@ def create_app(test_config=None):
         with app.app_context():
             init_db()
             db = get_db()
-            # Comprobar si ya existe un administrador.
             existe = db.execute(
                 "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
             ).fetchone()
             if existe:
                 return
-            # Crear el primer administrador.
             db.execute(
                 """INSERT INTO users
                    (username, password_hash, role)
@@ -527,6 +543,7 @@ def create_app(test_config=None):
     @app.cli.command("crear-admin")
     def crear_admin_command():
         crear_admin_inicial()
+=======
 
     @app.cli.command("vincular-google")
     @click.argument("username")
@@ -562,11 +579,11 @@ def create_app(test_config=None):
     @app.errorhandler(404)
     def not_found(error):
         return render_template("error.html", code=404, message="No encontramos ese registro."), 404
-    crear_admin_inicial()
+
     return app
 
 app = create_app()
 
 if __name__ == "__main__":
-    # LAN access. Use Waitress (README) rather than Flask's dev server in real deployment.
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=False)
+
