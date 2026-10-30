@@ -543,7 +543,6 @@ def create_app(test_config=None):
     @app.cli.command("crear-admin")
     def crear_admin_command():
         crear_admin_inicial()
-=======
 
     @app.cli.command("vincular-google")
     @click.argument("username")
@@ -586,4 +585,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=False)
-
