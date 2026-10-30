@@ -2,6 +2,17 @@
 
 Aplicación Flask con acceso local y, opcionalmente, inicio de sesión con Google.
 
+## Despliegue con Gunicorn
+
+Configura el comando de inicio del servidor como:
+
+```sh
+gunicorn main:app --bind 0.0.0.0:${PORT:-8080}
+```
+
+El módulo `main` expone la aplicación Flask para Gunicorn. Si el proveedor ya
+configura `main:app`, no es necesario cambiar ese destino.
+
 ## Configurar inicio con Google
 
 1. Instala dependencias: `python -m pip install -r requirements.txt`.

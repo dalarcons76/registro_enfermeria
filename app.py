@@ -493,7 +493,6 @@ def create_app(test_config=None):
                     flash("Ese nombre de usuario o correo Google ya está asignado.", "error")
         return render_template("create_user.html")
 
-    @app.cli.command("crear-admin")
     def crear_admin_inicial():
         usuario = os.environ.get("ADMIN_INICIAL_USUARIO", "").strip().lower()
         password = os.environ.get("ADMIN_INICIAL_PASSWORD", "")
@@ -524,23 +523,10 @@ def create_app(test_config=None):
             )
             db.commit()
             app.logger.info("Administrador inicial creado")
-    def create_admin_command():
-        """Crear primer administrador: flask --app app crear-admin"""
-        import getpass
-        username = input("Usuario administrador: ").strip().lower()
-        password = getpass.getpass("Contraseña (mínimo 12 caracteres): ")
-        if len(username) < 3 or len(password) < 12:
-            raise SystemExit("Usuario o contraseña demasiado cortos.")
-        with app.app_context():
-            init_db()
-            db = get_db()
-            try:
-                db.execute("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-                           (username,generate_password_hash(password),"admin"))
-                db.commit()
-            except sqlite3.IntegrityError:
-                raise SystemExit("Ese usuario ya existe.")
-        print("Administrador creado.")
+
+    @app.cli.command("crear-admin")
+    def crear_admin_command():
+        crear_admin_inicial()
 
     @app.cli.command("vincular-google")
     @click.argument("username")
