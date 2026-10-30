@@ -3,6 +3,19 @@ Registro de enfermeria escolar
 
 Consiste en digitalizar y automatizar el registro de alumnos para que el ingresado sea de facil busqueda y ademas de facil acceso a sus registros. 
 
+## Despliegue con Gunicorn
+
+Configura el comando de inicio del servidor como:
+
+```sh
+gunicorn main:app --bind 0.0.0.0:${PORT:-8080}
+```
+
+El módulo `main` expone la aplicación Flask para Gunicorn. Si el proveedor ya
+configura `main:app`, no es necesario cambiar ese destino.
+
+## Configurar inicio con Google
+=======
 la aplicación puede ser utilizada por un admin. 
 
 # Tecnologias utilizadas 

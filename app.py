@@ -512,7 +512,6 @@ def create_app(test_config=None):
                     flash("Ese nombre de usuario o correo Google ya está asignado.", "error")
         return render_template("create_user.html")
 
-    @app.cli.command("crear-admin")
     def crear_admin_inicial():
         usuario = os.environ.get("ADMIN_INICIAL_USUARIO", "").strip().lower()
         password = os.environ.get("ADMIN_INICIAL_PASSWORD", "")
@@ -540,6 +539,11 @@ def create_app(test_config=None):
             )
             db.commit()
             app.logger.info("Administrador inicial creado")
+
+    @app.cli.command("crear-admin")
+    def crear_admin_command():
+        crear_admin_inicial()
+=======
 
     @app.cli.command("vincular-google")
     @click.argument("username")
