@@ -15,10 +15,31 @@ El módulo `main` expone la aplicación Flask para Gunicorn. Si el proveedor ya
 configura `main:app`, no es necesario cambiar ese destino.
 
 ## Configurar inicio con Google
-=======
-la aplicación puede ser utilizada por un admin. 
 
-# Tecnologias utilizadas 
+1. Crea credenciales OAuth de tipo **Aplicación web** en Google Cloud Console.
+2. Configura `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` y `FLASK_SECRET_KEY`
+   en las variables de entorno del servidor.
+3. Registra como URI de redirección autorizada
+   `https://TU-DOMINIO/login/google/callback`. Para desarrollo local, usa
+   `http://localhost:5000/login/google/callback`.
+4. En producción, sirve el sitio con HTTPS y configura `HTTPS_ONLY=1`.
+5. Vincula una cuenta Google a un usuario activo existente. Con el usuario
+   conectado a la base de datos correcta, ejecuta:
+
+   ```sh
+   flask --app app vincular-google admin correo@ejemplo.cl
+   ```
+
+   Reemplaza `admin` por el nombre de usuario correspondiente. El inicio con
+   Google solo se habilita cuando están definidas ambas credenciales, y no
+   crea usuarios automáticamente.
+
+La base de datos se migra automáticamente al iniciar la aplicación. La
+vinculación inicial usa el correo verificado de Google y luego reconoce la
+cuenta mediante su identificador estable.
+
+# Tecnologías utilizadas
+
 Python:	Lenguaje principal para implementar la lógica del sistema.
 Flask:	   Framework que administra el servidor web, las rutas y las solicitudes de los usuarios.
 SQLite:	Base de datos relacional para almacenar la información de la aplicación.
