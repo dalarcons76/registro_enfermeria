@@ -1,0 +1,13 @@
+{% macro status_pill(status, size='') -%}
+<span class="status {{ size }} {{ status }}">
+  {{ {'atencion':'En atención','finalizada':'Finalizada'}[status] or status }}
+</span>
+{%- endmacro %}
+
+{% macro stat_card(label, value, note, color='blue') -%}
+<div class="stat">
+  <span class="stat-label">{{ label }}</span>
+  <strong>{{ value }}</strong>
+  <span class="stat-note"><i class="dot {{ color }}"></i> {{ note }}</span>
+</div>
+{%- endmacro %}

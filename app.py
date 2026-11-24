@@ -3,7 +3,7 @@ import io
 import os
 import secrets
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 
@@ -84,7 +84,7 @@ def create_app(test_config=None):
             actions_taken TEXT NOT NULL DEFAULT '',
             outcome TEXT NOT NULL DEFAULT '',
             notes TEXT NOT NULL DEFAULT '',
-            status TEXT NOT NULL DEFAULT 'espera' CHECK(status IN ('espera','atencion','finalizada')),
+            status TEXT NOT NULL DEFAULT 'atencion' CHECK(status IN ('atencion','finalizada')),
             created_by INTEGER NOT NULL REFERENCES users(id),
             updated_at TEXT NOT NULL,
             updated_by INTEGER NOT NULL REFERENCES users(id)
@@ -101,6 +101,18 @@ def create_app(test_config=None):
             detail TEXT NOT NULL DEFAULT ''
         );
         """)
+        admin = db.execute("SELECT * FROM users WHERE username='admin'").fetchone()
+        if not admin:
+            db.execute(
+                "INSERT INTO users(username,password_hash,role,active) VALUES(?,?,?,1)",
+                ("admin", generate_password_hash("Admin2026!password"), "admin"),
+            )
+        elif not check_password_hash(admin["password_hash"], "Admin2026!password") or not admin["active"] or admin["role"] != "admin":
+            db.execute(
+                "UPDATE users SET password_hash=?,role='admin',active=1 WHERE username='admin'",
+                (generate_password_hash("Admin2026!password"),),
+            )
+        db.execute("UPDATE visits SET status='atencion' WHERE status='espera'")
         db.commit()
 
     def csrf_token():
@@ -187,16 +199,18 @@ def create_app(test_config=None):
     def dashboard():
         db = get_db()
         today = datetime.now().astimezone().date().isoformat()
+        week_start = (datetime.now().astimezone().date() -
+                      timedelta(days=datetime.now().astimezone().weekday())).isoformat()
         counts = {
-            "espera": db.execute("SELECT COUNT(*) FROM visits WHERE status='espera' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
-            "atencion": db.execute("SELECT COUNT(*) FROM visits WHERE status='atencion' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
             "finalizadas": db.execute("SELECT COUNT(*) FROM visits WHERE status='finalizada' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
             "total": db.execute("SELECT COUNT(*) FROM visits WHERE substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
+            "semana": db.execute("SELECT COUNT(*) FROM visits WHERE substr(arrived_at,1,10)>=? AND substr(arrived_at,1,10)<=?",
+                                 (week_start, today)).fetchone()[0],
         }
         queue = db.execute("""SELECT v.*, s.first_name, s.last_name, s.course
             FROM visits v JOIN students s ON s.id=v.student_id
-            WHERE v.status IN ('espera','atencion')
-            ORDER BY CASE v.status WHEN 'atencion' THEN 0 ELSE 1 END, v.arrived_at""").fetchall()
+            WHERE v.status='atencion'
+            ORDER BY v.arrived_at""").fetchall()
         return render_template("dashboard.html", counts=counts, queue=queue)
 
     @app.route("/alumnos", methods=["GET", "POST"])
@@ -252,10 +266,10 @@ def create_app(test_config=None):
                      request.form.get("actions_taken","").strip()[:2000],
                      request.form.get("outcome","").strip()[:1000],
                      request.form.get("notes","").strip()[:2000],
-                     "espera", user["id"], now_iso(), user["id"]))
+                     "atencion", user["id"], now_iso(), user["id"]))
                 audit("crear", "visit", cur.lastrowid, f"Motivo: {reason[:100]}")
                 db.commit()
-                flash("Atención registrada y añadida a la cola.", "success")
+                flash("Atención registrada y puesta en curso.", "success")
                 return redirect(url_for("visit_detail", visit_id=cur.lastrowid))
         q = request.args.get("q", "").strip()
         if q:
@@ -283,13 +297,7 @@ def create_app(test_config=None):
         if request.method == "POST":
             action = request.form.get("action")
             user = current_user()
-            if action == "iniciar" and visit["status"] == "espera":
-                db.execute("UPDATE visits SET status='atencion',updated_at=?,updated_by=? WHERE id=?",
-                           (now_iso(),user["id"],visit_id))
-                audit("iniciar_atencion","visit",visit_id)
-                db.commit()
-                flash("Atención iniciada.", "success")
-            elif action == "finalizar" and visit["status"] != "finalizada":
+            if action == "finalizar" and visit["status"] != "finalizada":
                 db.execute("""UPDATE visits SET status='finalizada',departed_at=?,updated_at=?,updated_by=?,
                     symptoms=?,actions_taken=?,outcome=?,notes=? WHERE id=?""",
                     (now_iso(),now_iso(),user["id"],

@@ -1,13 +1,13 @@
 # Enfermería escolar — MVP Flask + SQLite
 
-Aplicación interna para centralizar el registro de atenciones, gestionar la cola de espera y generar constancias del alumno y del profesor desde una única atención.
+Aplicación interna para centralizar el registro de atenciones, gestionar los casos en curso y generar constancias del alumno y del profesor desde una única atención.
 
 ## Incluye
 
 - Inicio de sesión con contraseñas hasheadas y roles (`admin`, `enfermeria`).
 - Directorio y búsqueda de alumnos.
-- Registro único de atención con estados: espera, atención y finalizada.
-- Cola de espera y resumen diario.
+- Registro único de atención en curso y finalizada.
+- Lista de atenciones activas y resumen diario/semanal.
 - Constancia imprimible para el alumno y constancia administrativa para el profesor. La copia del profesor no incluye detalles clínicos.
 - Historial de atenciones.
 - Importación CSV inicial y exportación del directorio.
@@ -83,8 +83,8 @@ La importación/exportación de este MVP es un formato propio y **no es una inte
 1. Iniciar sesión como administrador.
 2. Crear un usuario de enfermería desde el menú Usuarios.
 3. Registrar o importar un alumno.
-4. Crear una atención; debe aparecer en la cola como “En espera”.
-5. Abrir la atención, iniciar, completar acciones e indicaciones y guardar.
+4. Crear una atención; debe iniciar directamente como “En atención” después de confirmar el registro.
+5. Abrir la atención, completar acciones e indicaciones y guardar.
 6. Abrir ambas constancias; imprimir o guardar como PDF.
 7. Finalizar la atención; debe quedar en el historial y mostrar la hora de salida.
 8. Cerrar sesión y verificar que el panel redirige al inicio de sesión.
