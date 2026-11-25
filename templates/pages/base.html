@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Enfermería escolar{% endblock %} · Colegio</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="{{ url_for('dashboard') if current_user else url_for('login') }}"><span class="brand-mark">+</span><span>Enfermería<span class="brand-muted"> escolar</span></span></a>
+  <a class="brand" href="{{ url_for('dashboard') if current_user else url_for('login') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo-colegio.png') }}" alt="Logo del colegio"><span>Enfermería<span class="brand-muted"> escolar</span></span></a>
   {% if current_user %}
   <nav>
     <a href="{{ url_for('dashboard') }}">Panel</a>
