@@ -408,7 +408,7 @@ def create_app(test_config=None):
         if request.method == "POST":
             action = request.form.get("action")
             user = current_user()
-            if action == "finalizar" and visit["status"] != "finalizada":
+            if action == "iniciar_imprimir" and visit["status"] == "atencion":
                 db.execute("""UPDATE visits SET status='finalizada',departed_at=?,updated_at=?,updated_by=?,
                     symptoms=?,actions_taken=?,outcome=?,notes=? WHERE id=?""",
                     (now_iso(),now_iso(),user["id"],
@@ -416,9 +416,9 @@ def create_app(test_config=None):
                      request.form.get("actions_taken","").strip()[:2000],
                      request.form.get("outcome","").strip()[:1000],
                      request.form.get("notes","").strip()[:2000],visit_id))
-                audit("finalizar","visit",visit_id)
+                audit("finalizar","visit",visit_id,"Iniciada e impresión de constancia del alumno")
                 db.commit()
-                flash("Atención finalizada.", "success")
+                return redirect(url_for("receipt", visit_id=visit_id, tipo="alumno", imprimir="1"))
             elif action == "guardar" and visit["status"] != "finalizada":
                 db.execute("""UPDATE visits SET symptoms=?,actions_taken=?,outcome=?,notes=?,updated_at=?,updated_by=? WHERE id=?""",
                     (request.form.get("symptoms","").strip()[:2000],
@@ -456,7 +456,9 @@ def create_app(test_config=None):
         if tipo not in ("alumno", "profesor"):
             abort(404)
         visit = visit_or_404(visit_id)
-        return render_template("receipt.html", visit=visit, tipo=tipo, printed_at=now_iso())
+        auto_print = request.args.get("imprimir") == "1"
+        return render_template("receipt.html", visit=visit, tipo=tipo, printed_at=now_iso(),
+                               auto_print=auto_print)
 
     @app.route("/exportar/alumnos.csv")
     @login_required

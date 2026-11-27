@@ -6,15 +6,13 @@
 <section class="panel"><div class="section-heading"><h2>Registro de atención</h2><span class="muted small">Ingreso: {{ visit.arrived_at }}</span></div>
 <div class="info-grid"><div><span>Motivo</span><strong>{{ visit.reason }}</strong></div><div><span>Registrado por</span><strong>{{ visit.nurse_username }}</strong></div><div class="span-2"><span>Síntomas iniciales</span><p>{{ visit.symptoms or 'Sin información registrada.' }}</p></div></div>
 {% if visit.status != 'finalizada' %}
-<form method="post" class="form-grid detail-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="guardar">
+<form method="post" class="form-grid detail-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 <label class="span-2">Síntomas / observaciones<textarea name="symptoms" rows="3">{{ visit.symptoms }}</textarea></label>
 <label class="span-2">Acciones realizadas<textarea name="actions_taken" rows="3">{{ visit.actions_taken }}</textarea></label>
 <label class="span-2">Resultado / indicaciones<textarea name="outcome" rows="2">{{ visit.outcome }}</textarea></label>
 <label class="span-2">Notas internas autorizadas<textarea name="notes" rows="2">{{ visit.notes }}</textarea></label>
-<button class="btn secondary span-2" type="submit">Guardar cambios</button></form>
-<div class="action-row">
-<form method="post" onsubmit="return confirm('¿Confirmas que esta atención ha finalizado?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="finalizar"><input type="hidden" name="symptoms" value="{{ visit.symptoms }}"><input type="hidden" name="actions_taken" value="{{ visit.actions_taken }}"><input type="hidden" name="outcome" value="{{ visit.outcome }}"><input type="hidden" name="notes" value="{{ visit.notes }}"><button class="btn danger" type="submit">Finalizar atención</button></form>
-</div>
+<div class="span-2"><p class="small muted">Al finalizar, la atención se marcará como finalizada y se abrirá la constancia del alumno para imprimir.</p><div class="action-row"><button class="btn secondary" type="submit" name="action" value="guardar">Guardar cambios</button><button class="btn primary" type="submit" name="action" value="iniciar_imprimir">Finalizar e imprimir</button></div></div>
+</form>
 {% else %}
 <div class="info-grid"><div class="span-2"><span>Acciones realizadas</span><p>{{ visit.actions_taken or '—' }}</p></div><div class="span-2"><span>Resultado / indicaciones</span><p>{{ visit.outcome or '—' }}</p></div><div class="span-2"><span>Notas internas</span><p>{{ visit.notes or '—' }}</p></div><div><span>Salida</span><strong>{{ visit.departed_at or '—' }}</strong></div></div>
 {% endif %}

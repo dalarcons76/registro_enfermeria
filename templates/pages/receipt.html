@@ -11,4 +11,6 @@
 <div class="receipt-section"><h2>Información administrativa</h2><p>El/la estudiante estuvo en enfermería durante el horario indicado. Para cualquier consulta, contacte al personal autorizado de enfermería.</p><p>No se incluyen síntomas, antecedentes ni detalles clínicos en esta copia destinada al profesor.</p></div>
 {% endif %}
 <div class="signature-row"><div><span>Firma / timbre de enfermería</span></div><div><span>Fecha de emisión: {{ printed_at[:10] }}</span></div></div>
-<p class="receipt-foot">Documento interno del colegio. Entregar únicamente al destinatario correspondiente. Folio de referencia: ENF-{{ '%06d'|format(visit.id) }}.</p></article></body></html>
+<p class="receipt-foot">Documento interno del colegio. Entregar únicamente al destinatario correspondiente. Folio de referencia: ENF-{{ '%06d'|format(visit.id) }}.</p></article>
+{% if auto_print %}<script>window.addEventListener('load', () => window.print(), { once: true });</script>{% endif %}
+</body></html>
