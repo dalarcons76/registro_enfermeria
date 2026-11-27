@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Atención #{{ visit.id }}{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">ATENCIÓN #{{ visit.id }}</p><h1>{{ visit.last_name }}, {{ visit.first_name }}</h1><p class="muted">{{ visit.course }}{% if visit.school_id %} · ID {{ visit.school_id }}{% endif %}</p></div><span class="status large {{ visit.status }}">{{ {'espera':'En espera','atencion':'En atención','finalizada':'Finalizada'}[visit.status] }}</span></div>
+<div class="page-heading"><div><p class="eyebrow">ATENCIÓN #{{ visit.id }}</p><h1>{{ visit.last_name }}, {{ visit.first_name }}</h1><p class="muted">{{ visit.course }}{% if visit.school_id %} · ID {{ visit.school_id }}{% endif %}</p></div><span class="status large {{ visit.status }}">{{ {'atencion':'En atención','finalizada':'Finalizada'}[visit.status] }}</span></div>
 <div class="detail-grid">
 <section class="panel"><div class="section-heading"><h2>Registro de atención</h2><span class="muted small">Ingreso: {{ visit.arrived_at }}</span></div>
 <div class="info-grid"><div><span>Motivo</span><strong>{{ visit.reason }}</strong></div><div><span>Registrado por</span><strong>{{ visit.nurse_username }}</strong></div><div class="span-2"><span>Síntomas iniciales</span><p>{{ visit.symptoms or 'Sin información registrada.' }}</p></div></div>
@@ -13,7 +13,6 @@
 <label class="span-2">Notas internas autorizadas<textarea name="notes" rows="2">{{ visit.notes }}</textarea></label>
 <button class="btn secondary span-2" type="submit">Guardar cambios</button></form>
 <div class="action-row">
-{% if visit.status == 'espera' %}<form method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="iniciar"><button class="btn primary" type="submit">Iniciar atención</button></form>{% endif %}
 <form method="post" onsubmit="return confirm('¿Confirmas que esta atención ha finalizado?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="finalizar"><input type="hidden" name="symptoms" value="{{ visit.symptoms }}"><input type="hidden" name="actions_taken" value="{{ visit.actions_taken }}"><input type="hidden" name="outcome" value="{{ visit.outcome }}"><input type="hidden" name="notes" value="{{ visit.notes }}"><button class="btn danger" type="submit">Finalizar atención</button></form>
 </div>
 {% else %}

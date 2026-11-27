@@ -115,13 +115,11 @@ def create_app(test_config=None):
             actions_taken TEXT NOT NULL DEFAULT '',
             outcome TEXT NOT NULL DEFAULT '',
             notes TEXT NOT NULL DEFAULT '',
-            status TEXT NOT NULL DEFAULT 'espera' CHECK(status IN ('espera','atencion','finalizada')),
+            status TEXT NOT NULL DEFAULT 'atencion' CHECK(status IN ('atencion','finalizada')),
             created_by INTEGER NOT NULL REFERENCES users(id),
             updated_at TEXT NOT NULL,
             updated_by INTEGER NOT NULL REFERENCES users(id)
         );
-        CREATE INDEX IF NOT EXISTS idx_visits_status_date ON visits(status, arrived_at);
-        CREATE INDEX IF NOT EXISTS idx_visits_student_date ON visits(student_id, arrived_at);
         CREATE TABLE IF NOT EXISTS audit_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER REFERENCES users(id),
@@ -139,6 +137,39 @@ def create_app(test_config=None):
             db.execute("ALTER TABLE users ADD COLUMN google_sub TEXT")
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_email ON users(google_email)")
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub)")
+
+        visits_schema = db.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='visits'"
+        ).fetchone()["sql"]
+        if "'espera'" in visits_schema:
+            db.execute("BEGIN")
+            db.execute("""CREATE TABLE visits_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER NOT NULL REFERENCES students(id),
+                created_at TEXT NOT NULL,
+                arrived_at TEXT NOT NULL,
+                departed_at TEXT,
+                reason TEXT NOT NULL,
+                symptoms TEXT NOT NULL DEFAULT '',
+                actions_taken TEXT NOT NULL DEFAULT '',
+                outcome TEXT NOT NULL DEFAULT '',
+                notes TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'atencion' CHECK(status IN ('atencion','finalizada')),
+                created_by INTEGER NOT NULL REFERENCES users(id),
+                updated_at TEXT NOT NULL,
+                updated_by INTEGER NOT NULL REFERENCES users(id)
+            )""")
+            db.execute("""INSERT INTO visits_new
+                (id,student_id,created_at,arrived_at,departed_at,reason,symptoms,actions_taken,
+                 outcome,notes,status,created_by,updated_at,updated_by)
+                SELECT id,student_id,created_at,arrived_at,departed_at,reason,symptoms,actions_taken,
+                 outcome,notes,CASE status WHEN 'espera' THEN 'atencion' ELSE status END,
+                 created_by,updated_at,updated_by FROM visits""")
+            db.execute("DROP TABLE visits")
+            db.execute("ALTER TABLE visits_new RENAME TO visits")
+            db.commit()
+        db.execute("CREATE INDEX IF NOT EXISTS idx_visits_status_date ON visits(status, arrived_at)")
+        db.execute("CREATE INDEX IF NOT EXISTS idx_visits_student_date ON visits(student_id, arrived_at)")
 
         # CREACIÓN DEL ADMINISTRADOR PREDETERMINADO AUTOMÁTICO
         admin_exists = db.execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone()
@@ -283,16 +314,15 @@ def create_app(test_config=None):
         db = get_db()
         today = datetime.now().astimezone().date().isoformat()
         counts = {
-            "espera": db.execute("SELECT COUNT(*) FROM visits WHERE status='espera' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
             "atencion": db.execute("SELECT COUNT(*) FROM visits WHERE status='atencion' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
             "finalizadas": db.execute("SELECT COUNT(*) FROM visits WHERE status='finalizada' AND substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
             "total": db.execute("SELECT COUNT(*) FROM visits WHERE substr(arrived_at,1,10)=?", (today,)).fetchone()[0],
         }
-        queue = db.execute("""SELECT v.*, s.first_name, s.last_name, s.course
+        active_visits = db.execute("""SELECT v.*, s.first_name, s.last_name, s.course
             FROM visits v JOIN students s ON s.id=v.student_id
-            WHERE v.status IN ('espera','atencion')
-            ORDER BY CASE v.status WHEN 'atencion' THEN 0 ELSE 1 END, v.arrived_at""").fetchall()
-        return render_template("dashboard.html", counts=counts, queue=queue)
+            WHERE v.status='atencion'
+            ORDER BY v.arrived_at""").fetchall()
+        return render_template("dashboard.html", counts=counts, active_visits=active_visits)
 
     @app.route("/alumnos", methods=["GET", "POST"])
     @login_required
@@ -347,10 +377,10 @@ def create_app(test_config=None):
                      request.form.get("actions_taken","").strip()[:2000],
                      request.form.get("outcome","").strip()[:1000],
                      request.form.get("notes","").strip()[:2000],
-                     "espera", user["id"], now_iso(), user["id"]))
+                     "atencion", user["id"], now_iso(), user["id"]))
                 audit("crear", "visit", cur.lastrowid, f"Motivo: {reason[:100]}")
                 db.commit()
-                flash("Atención registrada y añadida a la cola.", "success")
+                flash("Atención registrada e iniciada.", "success")
                 return redirect(url_for("visit_detail", visit_id=cur.lastrowid))
         q = request.args.get("q", "").strip()
         if q:
@@ -378,13 +408,7 @@ def create_app(test_config=None):
         if request.method == "POST":
             action = request.form.get("action")
             user = current_user()
-            if action == "iniciar" and visit["status"] == "espera":
-                db.execute("UPDATE visits SET status='atencion',updated_at=?,updated_by=? WHERE id=?",
-                           (now_iso(),user["id"],visit_id))
-                audit("iniciar_atencion","visit",visit_id)
-                db.commit()
-                flash("Atención iniciada.", "success")
-            elif action == "finalizar" and visit["status"] != "finalizada":
+            if action == "finalizar" and visit["status"] != "finalizada":
                 db.execute("""UPDATE visits SET status='finalizada',departed_at=?,updated_at=?,updated_by=?,
                     symptoms=?,actions_taken=?,outcome=?,notes=? WHERE id=?""",
                     (now_iso(),now_iso(),user["id"],

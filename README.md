@@ -4,7 +4,7 @@
 
 **Registro de Enfermería Escolar** es una aplicación web desarrollada con Flask para digitalizar y organizar la atención de alumnos en la enfermería del establecimiento.
 
-Permite registrar estudiantes, crear atenciones, mantener una cola de espera, iniciar y finalizar consultas, guardar observaciones clínicas administrativas y consultar el historial. La interfaz está diseñada para facilitar el uso dentro del colegio y mantener una búsqueda rápida de los registros.
+Permite registrar estudiantes, crear atenciones que comienzan directamente en curso, finalizar consultas, guardar observaciones clínicas administrativas y consultar el historial. La interfaz está diseñada para facilitar el uso dentro del colegio y mantener una búsqueda rápida de los registros.
 
 Este proyecto es un MVP. No incluye sincronización automática con sistemas externos ni garantiza compatibilidad con los formatos de Kimche. No se debe importar información clínica desde el sistema del colegio sin autorización expresa.
 
@@ -136,10 +136,10 @@ Todas las rutas, excepto el inicio de sesión y los enlaces de autenticación, r
 | `GET` | `/login/google` | Iniciar autenticación OAuth con Google. |
 | `GET` | `/login/google/callback` | Recibir la respuesta de Google y crear la sesión. |
 | `POST` | `/logout` | Cerrar la sesión actual. |
-| `GET` | `/` | Mostrar el panel diario y la cola de atenciones. |
+| `GET` | `/` | Mostrar el panel diario y las atenciones en curso. |
 | `GET`, `POST` | `/alumnos` | Listar, buscar y registrar alumnos. |
-| `GET`, `POST` | `/atenciones/nueva` | Crear una atención y añadirla a la cola. |
-| `GET`, `POST` | `/atenciones/<id>` | Ver o actualizar una atención: iniciar, guardar o finalizar. |
+| `GET`, `POST` | `/atenciones/nueva` | Crear e iniciar una atención. |
+| `GET`, `POST` | `/atenciones/<id>` | Ver o actualizar una atención: guardar o finalizar. |
 | `GET` | `/atenciones` | Consultar y buscar el historial de atenciones. |
 | `GET` | `/atenciones/<id>/constancia/<tipo>` | Generar una constancia para `alumno` o `profesor`. |
 | `GET` | `/exportar/alumnos.csv` | Descargar el listado activo de alumnos en CSV. |
@@ -211,8 +211,10 @@ Atenciones y su estado:
 - `student_id`: alumno atendido.
 - `created_at`, `arrived_at` y `departed_at`: tiempos de registro y salida.
 - `reason`, `symptoms`, `actions_taken`, `outcome` y `notes`: datos de la consulta.
-- `status`: `espera`, `atencion` o `finalizada`.
+- `status`: `atencion` o `finalizada`.
 - `created_by` y `updated_by`: usuarios responsables.
+
+Al actualizar una base existente, las atenciones que estaban en espera pasan automáticamente a `atencion`.
 
 ### `audit_log`
 
@@ -234,7 +236,7 @@ Las claves foráneas están habilitadas y existen índices para búsquedas por n
 - Protección de formularios con token CSRF.
 - Registro y búsqueda de alumnos.
 - Creación de atenciones asociadas a un alumno.
-- Cola de atenciones con estados de espera y atención.
+- Atenciones iniciadas directamente y finalización de consultas.
 - Registro de síntomas, acciones, resultados y notas.
 - Finalización de atenciones con hora de salida.
 - Historial y búsqueda de atenciones.

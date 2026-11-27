@@ -24,10 +24,11 @@
 .brand-mark,.primary,.topbar{background:linear-gradient(135deg,#2563eb,#0ea5e9)}
 .brand-mark,.primary{color:#fff}
 .primary:hover{background:linear-gradient(135deg,#1d4ed8,#0284c7)}
-.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
 .stat{background:linear-gradient(135deg,#fff 65%,#edf4ff)}
 .topbar{background:rgba(255,255,255,.96)}
 .quick-icon,.step,.document-icon,.pill{background:var(--teal-pale);color:var(--teal)}
 input:focus,select:focus,textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 3px #dbeafe}
 .status.atencion,.status.finalizada{background:var(--blue-bg);color:var(--blue)}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .receipt-head{border-bottom-color:#2563eb}
